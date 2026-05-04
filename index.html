@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coaching Platform Finder</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0C447C;--blue:#378ADD;--blue-light:#E6F1FB;
+  --teal:#1D9E75;--teal-light:#E1F5EE;
+  --amber:#EF9F27;--amber-light:#FAEEDA;
+  --red:#E24B4A;--red-light:#FCEBEB;
+  --gray-dk:#444441;--gray-md:#888780;--gray-lt:#F1EFE8;--gray-bd:#D3D1C7;
+  --white:#fff;--text:#2C2C2A;
+  --r:10px;--rs:6px;--sh:0 1px 4px rgba(0,0,0,.08);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F6F5F0;color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
+
+/* ── Topbar ── */
+.topbar{background:var(--navy);color:#fff;padding:12px 24px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.topbar-icon{width:32px;height:32px;background:var(--teal);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.topbar-title{font-size:15px;font-weight:700}
+.topbar-sub{font-size:11px;opacity:.6;margin-left:auto}
+
+/* ── Step nav ── */
+.stepnav{background:#fff;border-bottom:1px solid var(--gray-bd);display:flex;padding:0 20px;overflow-x:auto;gap:0;position:sticky;top:56px;z-index:190}
+.sn-item{display:flex;align-items:center;gap:8px;padding:12px 16px;cursor:pointer;border-bottom:3px solid transparent;color:var(--gray-md);font-size:13px;font-weight:500;white-space:nowrap;transition:all .15s;user-select:none}
+.sn-item:hover{color:var(--navy)}
+.sn-item.active{color:var(--navy);border-bottom-color:var(--teal)}
+.sn-item.done{color:var(--teal)}
+.sn-num{width:22px;height:22px;border-radius:50%;background:var(--gray-lt);color:var(--gray-md);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;transition:all .15s;flex-shrink:0}
+.sn-item.active .sn-num{background:var(--teal);color:#fff}
+.sn-item.done .sn-num{background:var(--teal-light);color:var(--teal)}
+.sn-arr{color:var(--gray-bd);padding:12px 4px;font-size:16px}
+
+/* ── Layout ── */
+.main{max-width:1140px;margin:0 auto;padding:20px 16px}
+.panel{background:#fff;border:1px solid var(--gray-bd);border-radius:var(--r);padding:20px 22px;margin-bottom:16px}
+.panel-title{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:3px}
+.panel-sub{font-size:12px;color:var(--gray-md);margin-bottom:14px}
+
+/* ── Summary strip ── */
+.sum-strip{display:flex;gap:0;align-items:center;background:#fff;border:1px solid var(--blue);border-radius:var(--rs);margin-bottom:16px;overflow:hidden;flex-wrap:wrap}
+.sum-cell{padding:8px 14px;font-size:12px;color:var(--navy);border-right:1px solid var(--blue-light)}
+.sum-cell strong{font-weight:700;display:block;font-size:15px}
+.sum-cell.edit-link{margin-left:auto;border-right:none;cursor:pointer;color:var(--blue);font-weight:600;font-size:12px;padding:8px 14px}
+.sum-cell.edit-link:hover{text-decoration:underline}
+
+/* ── Feature list ── */
+.feat-toolbar{display:flex;gap:6px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.pill{font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid var(--gray-bd);background:transparent;color:var(--gray-md);cursor:pointer;transition:all .12s;white-space:nowrap}
+.pill:hover{border-color:var(--navy);color:var(--navy)}
+.pill.p-all{background:var(--navy);color:#fff;border-color:var(--navy)}
+.pill.p-must{background:var(--red-light);color:var(--red);border-color:var(--red);font-weight:700}
+.pill.p-should{background:var(--amber-light);color:var(--amber);border-color:var(--amber);font-weight:700}
+.pill.p-nice{background:var(--teal-light);color:var(--teal);border-color:var(--teal);font-weight:700}
+.pill-sep{margin-left:auto}
+
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(295px,1fr));gap:10px}
+.feat-cat{border:1px solid var(--gray-bd);border-radius:var(--rs);overflow:hidden}
+.feat-cat-hd{background:var(--gray-lt);padding:7px 12px;font-size:10px;font-weight:700;color:var(--gray-dk);text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;justify-content:space-between}
+.cat-toggle{font-size:10px;color:var(--blue);cursor:pointer;font-weight:600;text-transform:none;letter-spacing:0}
+.feat-row{display:flex;align-items:flex-start;gap:8px;padding:7px 12px;border-top:1px solid var(--gray-bd);cursor:pointer;transition:background .1s}
+.feat-row:hover{background:var(--gray-lt)}
+.feat-cb{width:15px;height:15px;accent-color:var(--teal);cursor:pointer;flex-shrink:0;margin-top:1px}
+.feat-info{flex:1;min-width:0}
+.feat-name{font-size:12px;color:var(--text);line-height:1.35}
+.feat-desc{font-size:10px;color:var(--gray-md);margin-top:1px}
+.feat-badge{font-size:9px;padding:1px 5px;border-radius:8px;font-weight:700;display:inline-block;margin-top:2px}
+.fb-must{background:var(--red-light);color:var(--red)}
+.fb-should{background:var(--amber-light);color:var(--amber)}
+.fb-nice{background:var(--teal-light);color:var(--teal)}
+
+/* ── Scale sliders ── */
+.scale-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px}
+.scale-item label{display:block;font-size:12px;color:var(--gray-md);margin-bottom:5px;font-weight:500}
+.scale-val{font-size:26px;font-weight:800;color:var(--navy);margin-bottom:5px;line-height:1}
+.scale-sub{font-size:10px;color:var(--gray-md);margin-bottom:8px}
+input[type=range]{width:100%;accent-color:var(--teal);height:4px;cursor:pointer}
+.scale-ends{display:flex;justify-content:space-between;font-size:10px;color:var(--gray-md);margin-top:3px}
+
+/* ── Platform cards ── */
+.plat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px}
+.plat-card{background:#fff;border:1px solid var(--gray-bd);border-radius:var(--r);cursor:pointer;transition:all .15s;overflow:hidden;position:relative}
+.plat-card:hover{border-color:var(--blue);box-shadow:0 4px 14px rgba(55,138,221,.15);transform:translateY(-1px)}
+.plat-card.sel{border:2px solid var(--teal);box-shadow:0 0 0 3px rgba(29,158,117,.12)}
+.plat-card-body{padding:16px}
+.plat-rank{position:absolute;top:10px;right:10px;font-size:10px;font-weight:700;color:var(--gray-md)}
+.plat-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;display:inline-block;margin-bottom:6px}
+.pb-best{background:var(--teal-light);color:var(--teal)}
+.pb-value{background:var(--blue-light);color:var(--blue)}
+.pb-mid{background:var(--gray-lt);color:var(--gray-dk)}
+.plat-name{font-size:16px;font-weight:700;color:var(--navy)}
+.plat-tag{font-size:11px;color:var(--gray-md);margin-top:2px;margin-bottom:12px}
+
+.cov-bar-wrap{margin-bottom:10px}
+.cov-bar-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--gray-md);margin-bottom:3px}
+.cov-bar-score{font-weight:700;color:var(--text)}
+.bar-track{background:var(--gray-lt);border-radius:4px;height:6px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .5s ease}
+.bh{background:var(--teal)}.bm{background:var(--amber)}.bl{background:var(--red)}
+
+.price-chips{display:flex;gap:6px}
+.pc{background:var(--gray-lt);border-radius:var(--rs);padding:6px 10px;flex:1;text-align:center}
+.pc-lbl{font-size:9px;color:var(--gray-md)}
+.pc-val{font-size:12px;font-weight:700;color:var(--text)}
+
+.card-foot{border-top:1px solid var(--gray-bd);padding:9px 16px;display:flex;align-items:center;justify-content:space-between;background:var(--gray-lt)}
+.dots{display:flex;gap:3px;align-items:center}
+.dot{width:7px;height:7px;border-radius:50%}
+.dy{background:var(--teal)}.dp{background:var(--amber)}.dn{background:var(--red)}
+.view-btn{font-size:11px;color:var(--blue);font-weight:700;cursor:pointer;background:none;border:none;padding:0}
+.view-btn:hover{text-decoration:underline}
+
+/* ── Detail panel ── */
+.detail-wrap{background:#fff;border:1px solid var(--gray-bd);border-radius:var(--r);overflow:hidden}
+.detail-head{background:var(--navy);color:#fff;padding:18px 22px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.dh-name{font-size:18px;font-weight:800}
+.dh-sub{font-size:11px;opacity:.7;margin-top:2px}
+.dh-stat{text-align:center;padding:0 16px;border-left:1px solid rgba(255,255,255,.2)}
+.dh-big{font-size:26px;font-weight:800}
+.dh-tiny{font-size:10px;opacity:.65}
+.dh-close{margin-left:auto;background:rgba(255,255,255,.15);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dh-close:hover{background:rgba(255,255,255,.3)}
+
+.detail-strip{padding:12px 22px;background:var(--gray-lt);border-bottom:1px solid var(--gray-bd)}
+.bar-full{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+.bar-full .bar-track{flex:1;height:8px}
+
+.pros-cons{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pc-box{border-radius:var(--rs);padding:10px 12px}
+.pc-box.pros{background:var(--teal-light)}
+.pc-box.cons{background:var(--red-light)}
+.pc-head{font-size:11px;font-weight:700;margin-bottom:6px}
+.pc-box.pros .pc-head{color:var(--teal)}
+.pc-box.cons .pc-head{color:var(--red)}
+.pc-li{font-size:11px;color:var(--gray-dk);margin-bottom:3px;padding-left:12px;position:relative}
+.pc-li::before{content:'';position:absolute;left:0;top:5px;width:5px;height:5px;border-radius:50%}
+.pc-box.pros .pc-li::before{background:var(--teal)}
+.pc-box.cons .pc-li::before{background:var(--red)}
+
+.detail-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.detail-col{padding:18px 22px}
+.detail-col+.detail-col{border-left:1px solid var(--gray-bd)}
+.dc-title{font-size:10px;font-weight:700;color:var(--gray-md);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+
+/* ── Feature matrix table ── */
+.ftable{width:100%;border-collapse:collapse;font-size:12px}
+.ftable th{text-align:left;padding:5px 7px;background:var(--gray-lt);color:var(--gray-md);font-weight:600;font-size:10px;text-transform:uppercase;position:sticky;top:0}
+.ftable td{padding:5px 7px;border-bottom:1px solid var(--gray-bd);vertical-align:middle}
+.ftable tr:last-child td{border-bottom:none}
+.ftable .cat-r td{background:var(--gray-lt);font-weight:700;font-size:10px;text-transform:uppercase;color:var(--gray-md);padding:4px 7px}
+.cv-yes{color:var(--teal);font-weight:700}
+.cv-partial{color:var(--amber);font-weight:700}
+.cv-no{color:var(--red);font-weight:700}
+
+/* ── Price breakdown ── */
+.ptable{width:100%;border-collapse:collapse;font-size:12px}
+.ptable td{padding:6px 7px;border-bottom:1px solid var(--gray-bd)}
+.ptable .sec-r td{background:var(--gray-lt);font-weight:700;font-size:10px;text-transform:uppercase;color:var(--gray-md)}
+.ptable .tot-r td{font-weight:700;background:var(--teal-light);color:var(--teal);font-size:12px}
+.ptable .yr2-r td{background:var(--blue-light);color:var(--blue);font-weight:700}
+.pr{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ── Nav row ── */
+.nav-row{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:14px}
+.btn{padding:8px 18px;border-radius:var(--rs);font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--gray-bd);background:#fff;color:var(--text);transition:all .12s}
+.btn:hover{background:var(--gray-lt)}
+.btn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn.primary:hover{background:#0a3a6a}
+.btn.teal{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn.teal:hover{background:#178a64}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.count-hint{font-size:12px;color:var(--gray-md);margin-right:auto}
+
+/* ── Tags ── */
+.tag{font-size:9px;padding:1px 5px;border-radius:6px;font-weight:700;display:inline-block}
+.tag-warn{background:var(--amber-light);color:var(--amber)}
+
+/* ── Sort bar ── */
+.sort-bar{display:flex;align-items:center;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.sort-bar select{font-size:12px;padding:4px 8px;border:1px solid var(--gray-bd);border-radius:4px;background:#fff;cursor:pointer}
+.sort-bar label{font-size:11px;color:var(--gray-md)}
+
+/* ── Disclaimer ── */
+.disc{margin-top:10px;padding:10px 12px;background:var(--amber-light);border-radius:6px;font-size:10px;color:var(--amber);line-height:1.5}
+
+.hidden{display:none}
+.empty{text-align:center;padding:40px;color:var(--gray-md);font-size:13px}
+
+@media(max-width:640px){
+  .detail-body,.pros-cons{grid-template-columns:1fr}
+  .detail-col+.detail-col{border-left:none;border-top:1px solid var(--gray-bd)}
+  .price-chips{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+
+<!-- ── Topbar ── -->
+<div class="topbar">
+  <div class="topbar-icon">🎯</div>
+  <div>
+    <div class="topbar-title">Coaching Platform Finder</div>
+  </div>
+  <div class="topbar-sub">B2B Coaching Vendor Tool — based on your evaluation research</div>
+</div>
+
+<!-- ── Step nav ── -->
+<div class="stepnav">
+  <div class="sn-item active" id="sn1" onclick="goStep(1)"><div class="sn-num">1</div> Pick Features</div>
+  <div class="sn-arr">›</div>
+  <div class="sn-item" id="sn2" onclick="goStep(2)"><div class="sn-num">2</div> Adjust Scale</div>
+  <div class="sn-arr">›</div>
+  <div class="sn-item" id="sn3" onclick="goStep(3)"><div class="sn-num">3</div> Compare Platforms</div>
+  <div class="sn-arr">›</div>
+  <div class="sn-item" id="sn4" onclick="if(selPlat)goStep(4)"><div class="sn-num">4</div> Platform Detail</div>
+</div>
+
+<div class="main">
+
+<!-- ── Summary strip (step 3+) ── -->
+<div class="sum-strip hidden" id="sumStrip">
+  <div class="sum-cell"><span style="font-size:10px;color:var(--gray-md)">Features</span><strong id="ss-feats">0</strong></div>
+  <div class="sum-cell"><span style="font-size:10px;color:var(--gray-md)">Must-haves</span><strong id="ss-musts" style="color:var(--red)">0</strong></div>
+  <div class="sum-cell"><span style="font-size:10px;color:var(--gray-md)">Coaches</span><strong id="ss-coaches">50</strong></div>
+  <div class="sum-cell"><span style="font-size:10px;color:var(--gray-md)">Clients</span><strong id="ss-clients">20</strong></div>
+  <div class="sum-cell"><span style="font-size:10px;color:var(--gray-md)">Coachees/mo</span><strong id="ss-coachees">300</strong></div>
+  <div class="sum-cell edit-link" onclick="goStep(1)">✏ Edit</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     STEP 1 — Feature selection
+═══════════════════════════════════════════════════════════════ -->
+<div id="s1">
+  <div class="panel">
+    <div class="panel-title">Select features you need</div>
+    <div class="panel-sub">Default selections are your must-have requirements from the evaluation report. Add or remove anything.</div>
+
+    <div class="feat-toolbar">
+      <button class="pill p-all" id="filt-all" onclick="setFilter('all')">All features</button>
+      <button class="pill" id="filt-must" onclick="setFilter('must')">Must-have</button>
+      <button class="pill" id="filt-should" onclick="setFilter('should')">Should-have</button>
+      <button class="pill" id="filt-nice" onclick="setFilter('nice')">Nice-to-have</button>
+      <span class="pill-sep"></span>
+      <button class="pill" onclick="bulkSelect(true)">Select visible</button>
+      <button class="pill" onclick="bulkSelect(false)">Clear visible</button>
+    </div>
+
+    <div class="feat-grid" id="featGrid"></div>
+  </div>
+  <div class="nav-row">
+    <span class="count-hint" id="s1count">0 features selected</span>
+    <button class="btn primary" onclick="goStep(2)">Next: Adjust Scale →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     STEP 2 — Scale
+═══════════════════════════════════════════════════════════════ -->
+<div id="s2" class="hidden">
+  <div class="panel">
+    <div class="panel-title">Adjust your scale</div>
+    <div class="panel-sub">Pricing estimates are recalculated live based on these numbers.</div>
+    <div class="scale-grid">
+      <div class="scale-item">
+        <label>Number of coaches</label>
+        <div class="scale-val" id="v-coaches">50</div>
+        <div class="scale-sub">Each coach needs a licensed seat</div>
+        <input type="range" min="5" max="150" step="5" value="50" id="sl-coaches" oninput="syncScale()">
+        <div class="scale-ends"><span>5</span><span>150</span></div>
+      </div>
+      <div class="scale-item">
+        <label>Corporate client companies</label>
+        <div class="scale-val" id="v-clients">20</div>
+        <div class="scale-sub">Each gets their own SSO config &amp; portal</div>
+        <input type="range" min="1" max="60" step="1" value="20" id="sl-clients" oninput="syncScale()">
+        <div class="scale-ends"><span>1</span><span>60</span></div>
+      </div>
+      <div class="scale-item">
+        <label>Active coachees / month</label>
+        <div class="scale-val" id="v-coachees">300</div>
+        <div class="scale-sub">Employees actively booking sessions</div>
+        <input type="range" min="20" max="2000" step="20" value="300" id="sl-coachees" oninput="syncScale()">
+        <div class="scale-ends"><span>20</span><span>2,000</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="nav-row">
+    <button class="btn" onclick="goStep(1)">← Back</button>
+    <button class="btn primary" onclick="goStep(3)">Next: Compare Platforms →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     STEP 3 — Platform comparison
+═══════════════════════════════════════════════════════════════ -->
+<div id="s3" class="hidden">
+  <div class="sort-bar">
+    <label>Sort by:</label>
+    <select id="sortBy" onchange="renderCards()">
+      <option value="coverage">Coverage score</option>
+      <option value="price_asc">Price ↑ low to high</option>
+      <option value="price_desc">Price ↓ high to low</option>
+    </select>
+    <span style="font-size:11px;color:var(--gray-md);margin-left:6px" id="s3hint"></span>
+  </div>
+  <div class="plat-grid" id="platGrid"></div>
+  <div class="nav-row">
+    <button class="btn" onclick="goStep(2)">← Back</button>
+    <button class="btn teal" id="detailBtn" disabled onclick="goStep(4)">View Full Detail →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     STEP 4 — Platform detail
+═══════════════════════════════════════════════════════════════ -->
+<div id="s4" class="hidden">
+  <div class="detail-wrap" id="detailWrap"></div>
+  <div class="nav-row">
+    <button class="btn" onclick="goStep(3)">← Back to comparison</button>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<script>
+// ════════════════════════════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════════════════════════════
+const FEATS = [
+  // Booking
+  {id:'f01',name:'Self-booking by coachees',cat:'Booking',pri:'must',desc:'Employees pick session time from coach availability'},
+  {id:'f02',name:'Calendar sync (Google / Outlook)',cat:'Booking',pri:'must',desc:'Two-way sync prevents double-bookings'},
+  {id:'f03',name:'Automated session reminders',cat:'Booking',pri:'must',desc:'Email/SMS reminders to reduce no-shows'},
+  {id:'f04',name:'Buffer time between sessions',cat:'Booking',pri:'should',desc:'Prevent back-to-back bookings for coaches'},
+  {id:'f05',name:'Recurring session booking',cat:'Booking',pri:'should',desc:'Book a series of sessions at once'},
+  {id:'f06',name:'Cancellation & rescheduling policy',cat:'Booking',pri:'should',desc:'Enforce notice periods per contract'},
+  // Coach management
+  {id:'f07',name:'Coach profiles & bios',cat:'Coach Mgmt',pri:'must',desc:'Certifications, specialties, languages, availability'},
+  {id:'f08',name:'Coach pool per client',cat:'Coach Mgmt',pri:'must',desc:'Assign subset of coaches to each corporate client'},
+  {id:'f09',name:'Coach availability management',cat:'Coach Mgmt',pri:'must',desc:'Coaches set working hours and block dates'},
+  {id:'f10',name:'Coach matching / selection',cat:'Coach Mgmt',pri:'must',desc:'Coachees browse and select their coach'},
+  {id:'f11',name:'Coach utilization tracking',cat:'Coach Mgmt',pri:'should',desc:'Monitor active sessions to balance workload'},
+  {id:'f12',name:'Coach performance ratings',cat:'Coach Mgmt',pri:'nice',desc:'Post-session feedback on coach quality'},
+  // Session delivery
+  {id:'f13',name:'Session notes (coach-side)',cat:'Session',pri:'must',desc:'Private notes visible only to the coach'},
+  {id:'f14',name:'Shared session summary',cat:'Session',pri:'must',desc:'Key takeaways visible to both coach and coachee'},
+  {id:'f15',name:'Goal setting & tracking',cat:'Session',pri:'must',desc:'Set goals at engagement start, track each session'},
+  {id:'f16',name:'Action items per session',cat:'Session',pri:'should',desc:'Tasks assigned with due dates'},
+  {id:'f17',name:'Built-in video conferencing',cat:'Session',pri:'should',desc:'No need for Zoom/Teams — native video'},
+  {id:'f18',name:'Session recordings',cat:'Session',pri:'nice',desc:'Optional recording with consent'},
+  {id:'f19',name:'AI session transcription',cat:'Session',pri:'nice',desc:'Auto-transcribe and summarize sessions'},
+  // Client management
+  {id:'f20',name:'Per-client portal',cat:'Client Mgmt',pri:'must',desc:'Each corporate client has their own isolated space'},
+  {id:'f21',name:'Per-client SSO (SAML 2.0)',cat:'Client Mgmt',pri:'must',desc:'Each client connects their own IdP (Okta, Azure, Google)'},
+  {id:'f22',name:'Engagement contracts',cat:'Client Mgmt',pri:'must',desc:'Define session count, duration, package per client'},
+  {id:'f23',name:'Sponsor / HR dashboard',cat:'Client Mgmt',pri:'must',desc:'Client HR sees aggregate progress — no session content'},
+  {id:'f24',name:'User provisioning (SCIM)',cat:'Client Mgmt',pri:'should',desc:'Auto-add/remove employees via HRIS sync'},
+  {id:'f25',name:'Client-level branding',cat:'Client Mgmt',pri:'nice',desc:'Show client logo inside their portal'},
+  // Analytics
+  {id:'f26',name:'Session completion rate',cat:'Analytics',pri:'must',desc:'% of booked sessions completed per client'},
+  {id:'f27',name:'Per-client analytics dashboard',cat:'Analytics',pri:'must',desc:'Usage summary exportable for client QBRs'},
+  {id:'f28',name:'Goal progress reporting',cat:'Analytics',pri:'should',desc:'Aggregate goal achievement across coachees'},
+  {id:'f29',name:'Coach utilization report',cat:'Analytics',pri:'should',desc:'Sessions per coach, idle capacity'},
+  {id:'f30',name:'NPS / satisfaction scores',cat:'Analytics',pri:'should',desc:'Post-session ratings by client and coach'},
+  {id:'f31',name:'ROI / impact reporting',cat:'Analytics',pri:'nice',desc:'Link coaching outcomes to business metrics'},
+  // Security & branding
+  {id:'f32',name:'White-label branding',cat:'Security',pri:'must',desc:'Your logo and colors — client never sees platform name'},
+  {id:'f33',name:'Custom domain',cat:'Security',pri:'should',desc:'Platform at coaching.yourco.com'},
+  {id:'f34',name:'Role-based access control',cat:'Security',pri:'must',desc:'Admin / coach / coachee / sponsor roles'},
+  {id:'f35',name:'Data privacy (GDPR / SOC 2)',cat:'Security',pri:'must',desc:'Compliance certifications for enterprise clients'},
+  {id:'f36',name:'Audit logs',cat:'Security',pri:'should',desc:'Track data access for compliance'},
+  {id:'f37',name:'Data export',cat:'Security',pri:'should',desc:'Export all data in portable format'},
+  // Billing
+  {id:'f38',name:'Engagement-based billing',cat:'Billing',pri:'must',desc:'Invoice per coaching package / contract per client'},
+  {id:'f39',name:'Invoicing & payment processing',cat:'Billing',pri:'should',desc:'Generate invoices, accept payment via Stripe'},
+  {id:'f40',name:'Coach payout management',cat:'Billing',pri:'should',desc:'Track what is owed to each coach'},
+  {id:'f41',name:'Automated billing',cat:'Billing',pri:'nice',desc:'Auto-generate invoices at contract milestones'},
+  {id:'f42',name:'Multi-currency support',cat:'Billing',pri:'nice',desc:'Bill international clients in local currency'},
+];
+
+const PLATFORMS = [
+  {
+    id:'coaching_com', name:'Coaching.com', tag:'Purpose-built for B2B coaching vendors',
+    badge:'best', badgeLbl:'Best fit', website:'https://www.coaching.com',
+    cov:{f01:'yes',f02:'partial',f03:'yes',f04:'yes',f05:'yes',f06:'yes',
+         f07:'yes',f08:'yes',f09:'yes',f10:'yes',f11:'yes',f12:'yes',
+         f13:'yes',f14:'yes',f15:'yes',f16:'yes',f17:'yes',f18:'partial',f19:'no',
+         f20:'yes',f21:'yes',f22:'yes',f23:'yes',f24:'partial',f25:'yes',
+         f26:'yes',f27:'yes',f28:'yes',f29:'yes',f30:'yes',f31:'partial',
+         f32:'yes',f33:'yes',f34:'yes',f35:'yes',f36:'yes',f37:'yes',
+         f38:'yes',f39:'yes',f40:'yes',f41:'partial',f42:'no'},
+    price(c,cl){
+      const base=897, seats=c*17, sso=cl*150, wl=300, api=200, sponsor=100;
+      const m=base+seats+sso+wl+api+sponsor;
+      const a=m*12*0.85;
+      const s=8000+(cl*500)+3000+4000;
+      return {m,a,y1:a+s,rows:[
+        {lbl:'Base enterprise platform',m:base,a:base*12*.85},
+        {lbl:`Coach seats (${c} × $17/mo)`,m:seats,a:seats*12*.85},
+        {lbl:`Per-client SSO (${cl} × $150/mo)`,m:sso,a:sso*12*.85},
+        {lbl:'White-label branding',m:wl,a:wl*12*.85},
+        {lbl:'API access',m:api,a:api*12*.85},
+        {lbl:'Sponsor portal',m:sponsor,a:sponsor*12*.85},
+      ],srows:[
+        {lbl:'Implementation & onboarding',a:8000},
+        {lbl:`SSO setup (${cl} clients × $500)`,a:cl*500},
+        {lbl:'White-label setup',a:3000},
+        {lbl:'Admin & coach training',a:4000},
+      ]};
+    },
+    pros:['SAML 2.0 SSO confirmed — per client configurable','Only platform designed for coaching vendors','Native coach pool management per client','Engagement contracts + sponsor dashboards built-in','API for HRIS integration'],
+    cons:['Steep learning curve & setup complexity','Calendar sync reliability issues reported','Auto-billing complex to configure','Slow customer support (days to weeks)','Mobile experience weaker than desktop'],
+    notes:{}
+  },
+  {
+    id:'delenta', name:'Delenta', tag:'Best value — white-label mobile app included',
+    badge:'value', badgeLbl:'Best value', website:'https://www.delenta.com',
+    cov:{f01:'yes',f02:'yes',f03:'yes',f04:'yes',f05:'yes',f06:'yes',
+         f07:'yes',f08:'yes',f09:'yes',f10:'partial',f11:'yes',f12:'partial',
+         f13:'yes',f14:'yes',f15:'yes',f16:'yes',f17:'yes',f18:'partial',f19:'no',
+         f20:'yes',f21:'partial',f22:'yes',f23:'yes',f24:'partial',f25:'yes',
+         f26:'yes',f27:'yes',f28:'yes',f29:'yes',f30:'yes',f31:'no',
+         f32:'yes',f33:'yes',f34:'yes',f35:'yes',f36:'partial',f37:'yes',
+         f38:'yes',f39:'yes',f40:'yes',f41:'partial',f42:'no'},
+    price(c,cl){
+      const base=299, seats=c*12, portals=cl*50, wl=150, saml=600;
+      const m=base+seats+portals+wl+saml;
+      const a=m*12*0.85;
+      const s=5000+(cl*300)+2000+2500;
+      return {m,a,y1:a+s,rows:[
+        {lbl:'Base Team/Enterprise platform',m:base,a:base*12*.85},
+        {lbl:`Coach seats (${c} × $12/mo)`,m:seats,a:seats*12*.85},
+        {lbl:`Per-client portals (${cl} × $50/mo)`,m:portals,a:portals*12*.85},
+        {lbl:'White-label + mobile app',m:wl,a:wl*12*.85},
+        {lbl:'SAML SSO add-on (est.)',m:saml,a:saml*12*.85},
+      ],srows:[
+        {lbl:'Implementation & onboarding',a:5000},
+        {lbl:`SSO config (${cl} clients × $300)`,a:cl*300},
+        {lbl:'White-label & brand setup',a:2000},
+        {lbl:'Admin & coach training',a:2500},
+      ]};
+    },
+    pros:['~35% cheaper than Coaching.com','White-label mobile app (unique in market)','Simpler to set up and use','B2B sponsor dashboards included','7-day full-feature trial available'],
+    cons:['SAML SSO per client — MUST CONFIRM with sales','Coach matching is more basic','Per-client analytics less granular','Smaller company — check long-term stability'],
+    notes:{f21:'Confirm with Delenta sales: "Can each of our clients configure a separate SAML IdP?"'}
+  },
+  {
+    id:'torch', name:'Torch', tag:'Strong SSO + AI matching, limited white-label',
+    badge:'mid', badgeLbl:'Strong SSO', website:'https://www.torch.io',
+    cov:{f01:'yes',f02:'yes',f03:'yes',f04:'yes',f05:'yes',f06:'yes',
+         f07:'yes',f08:'partial',f09:'yes',f10:'yes',f11:'yes',f12:'yes',
+         f13:'yes',f14:'yes',f15:'yes',f16:'yes',f17:'yes',f18:'partial',f19:'partial',
+         f20:'partial',f21:'yes',f22:'yes',f23:'yes',f24:'partial',f25:'no',
+         f26:'yes',f27:'yes',f28:'yes',f29:'yes',f30:'yes',f31:'yes',
+         f32:'partial',f33:'partial',f34:'yes',f35:'yes',f36:'yes',f37:'yes',
+         f38:'yes',f39:'yes',f40:'partial',f41:'no',f42:'no'},
+    price(c,cl){
+      const base=500, seats=c*20, sso=cl*80, analytics=100;
+      const m=base+seats+sso+analytics;
+      const a=m*12*0.85;
+      const s=10000+(cl*400)+1000+5000;
+      return {m,a,y1:a+s,rows:[
+        {lbl:'Base enterprise platform',m:base,a:base*12*.85},
+        {lbl:`Coach seats (${c} × $20/mo)`,m:seats,a:seats*12*.85},
+        {lbl:`Client SSO (${cl} × $80/mo)`,m:sso,a:sso*12*.85},
+        {lbl:'Analytics add-on',m:analytics,a:analytics*12*.85},
+      ],srows:[
+        {lbl:'Implementation',a:10000},
+        {lbl:`SSO setup (${cl} × $400)`,a:cl*400},
+        {lbl:'White-label setup (limited)',a:1000},
+        {lbl:'Training',a:5000},
+      ]};
+    },
+    pros:['SSO per organization confirmed','AI coach matching','Strong analytics + ROI reporting','Built-in video conferencing'],
+    cons:['White-label limited — not full custom brand','Coach pool per client less native','Higher implementation cost','Not designed for coaching vendors specifically'],
+    notes:{}
+  },
+  {
+    id:'simply_coach', name:'Simply.Coach', tag:'Good all-rounder for smaller coaching teams',
+    badge:'mid', badgeLbl:'SMB fit', website:'https://simply.coach',
+    cov:{f01:'yes',f02:'yes',f03:'yes',f04:'yes',f05:'yes',f06:'yes',
+         f07:'yes',f08:'yes',f09:'yes',f10:'partial',f11:'yes',f12:'yes',
+         f13:'yes',f14:'yes',f15:'yes',f16:'yes',f17:'yes',f18:'no',f19:'no',
+         f20:'yes',f21:'no',f22:'yes',f23:'partial',f24:'no',f25:'partial',
+         f26:'yes',f27:'partial',f28:'partial',f29:'partial',f30:'yes',f31:'no',
+         f32:'yes',f33:'yes',f34:'yes',f35:'yes',f36:'no',f37:'yes',
+         f38:'yes',f39:'yes',f40:'yes',f41:'no',f42:'no'},
+    price(c,cl){
+      const base=59, seats=c*15, portals=cl*30;
+      const m=base+seats+portals;
+      const a=m*12*0.85;
+      const s=3000+(cl*200)+1000+2000;
+      return {m,a,y1:a+s,rows:[
+        {lbl:'Premium plan base',m:base,a:base*12*.85},
+        {lbl:`Coach seats (${c} × $15/mo)`,m:seats,a:seats*12*.85},
+        {lbl:`Client portals (${cl} × $30/mo)`,m:portals,a:portals*12*.85},
+      ],srows:[
+        {lbl:'Implementation',a:3000},
+        {lbl:`Client setup (${cl} × $200)`,a:cl*200},
+        {lbl:'Branding setup',a:1000},
+        {lbl:'Training',a:2000},
+      ]};
+    },
+    pros:['SOC 2 + HIPAA + GDPR certified','Most affordable at base tier','Easy to set up','Good session notes and goal tracking'],
+    cons:['No SAML SSO — major blocker for enterprise clients','Per-client analytics basic','Sponsor dashboard limited','Not designed for coaching vendors at scale'],
+    notes:{}
+  },
+  {
+    id:'ezra', name:'Ezra', tag:'Executive coaching platform — not vendor-friendly',
+    badge:'mid', badgeLbl:'Exec coaching', website:'https://helloezra.com',
+    cov:{f01:'yes',f02:'yes',f03:'yes',f04:'partial',f05:'yes',f06:'yes',
+         f07:'yes',f08:'no',f09:'yes',f10:'yes',f11:'partial',f12:'yes',
+         f13:'partial',f14:'partial',f15:'yes',f16:'partial',f17:'yes',f18:'no',f19:'no',
+         f20:'yes',f21:'yes',f22:'partial',f23:'yes',f24:'no',f25:'no',
+         f26:'yes',f27:'yes',f28:'yes',f29:'partial',f30:'yes',f31:'yes',
+         f32:'no',f33:'no',f34:'yes',f35:'yes',f36:'yes',f37:'partial',
+         f38:'partial',f39:'partial',f40:'no',f41:'no',f42:'no'},
+    price(c,cl){
+      const base=400, seats=c*25, sso=cl*100;
+      const m=base+seats+sso;
+      const a=m*12*0.85;
+      const s=8000+(cl*600)+500+3000;
+      return {m,a,y1:a+s,rows:[
+        {lbl:'Enterprise platform base',m:base,a:base*12*.85},
+        {lbl:`Coach accounts (${c} × $25/mo)`,m:seats,a:seats*12*.85},
+        {lbl:`Client SSO (${cl} × $100/mo)`,m:sso,a:sso*12*.85},
+      ],srows:[
+        {lbl:'Implementation',a:8000},
+        {lbl:`SSO setup (${cl} × $600)`,a:cl*600},
+        {lbl:'Setup (minimal white-label)',a:500},
+        {lbl:'Training',a:3000},
+      ]};
+    },
+    pros:['SAML SSO confirmed (Microsoft Entra)','Strong executive coaching analytics','Built-in video + mobile app'],
+    cons:['No white-label — Ezra brand shows everywhere','Coach pool per client not supported','Designed for corporate buyers, not coaching vendors','Service-based billing model'],
+    notes:{}
+  },
+];
+
+// ════════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════════
+// Default: all must-have features selected (matching the PDF evaluation)
+const selected = new Set(FEATS.filter(f=>f.pri==='must').map(f=>f.id));
+let coaches=50, clients=20, coachees=300;
+let filt='all';
+let selPlat=null;
+let curStep=1;
+
+// ════════════════════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════════════════════
+const $=id=>document.getElementById(id);
+const fmt=n=>'$'+Math.round(n).toLocaleString();
+
+function covScore(platId){
+  const p=PLATFORMS.find(x=>x.id===platId);
+  const sel=[...selected];
+  if(!sel.length) return {score:0,total:0,pct:0};
+  let score=0;
+  sel.forEach(fid=>{
+    const v=p.cov[fid]||'no';
+    if(v==='yes') score+=1;
+    else if(v==='partial') score+=0.5;
+  });
+  return {score,total:sel.length,pct:Math.round(score/sel.length*100)};
+}
+
+function barClass(pct){return pct>=80?'bh':pct>=60?'bm':'bl'}
+
+// ════════════════════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════════════════════
+function goStep(n){
+  [1,2,3,4].forEach(i=>{
+    $('s'+i).classList.toggle('hidden',i!==n);
+    const tab=$('sn'+i);
+    tab.classList.toggle('active',i===n);
+    tab.classList.toggle('done',i<n);
+  });
+  $('sumStrip').classList.toggle('hidden',n<3);
+  if(n===3){updateSumStrip();renderCards();}
+  if(n===4&&selPlat) renderDetail(selPlat);
+  curStep=n;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ════════════════════════════════════════════════════════════════
+// STEP 1 — FEATURES
+// ════════════════════════════════════════════════════════════════
+function setFilter(f){
+  filt=f;
+  ['all','must','should','nice'].forEach(x=>{
+    $('filt-'+x).className='pill'+(x===f?' p-'+f:'');
+  });
+  renderFeats();
+}
+
+function bulkSelect(val){
+  const vis=FEATS.filter(f=>filt==='all'||f.pri===filt);
+  vis.forEach(f=>val?selected.add(f.id):selected.delete(f.id));
+  renderFeats();
+}
+
+function toggleFeat(id){
+  selected.has(id)?selected.delete(id):selected.add(id);
+  // Just update checkbox and counter without full re-render
+  const cb=document.querySelector(`input[data-id="${id}"]`);
+  if(cb) cb.checked=selected.has(id);
+  updateS1Counter();
+}
+
+function toggleCat(cat){
+  const feats=FEATS.filter(f=>f.cat===cat&&(filt==='all'||f.pri===filt));
+  const allOn=feats.every(f=>selected.has(f.id));
+  feats.forEach(f=>allOn?selected.delete(f.id):selected.add(f.id));
+  renderFeats();
+}
+
+function updateS1Counter(){
+  $('s1count').textContent=`${selected.size} feature${selected.size!==1?'s':''} selected`;
+}
+
+function renderFeats(){
+  const cats=[...new Set(FEATS.map(f=>f.cat))];
+  const grid=$('featGrid');
+  grid.innerHTML='';
+  cats.forEach(cat=>{
+    const feats=FEATS.filter(f=>f.cat===cat&&(filt==='all'||f.pri===filt));
+    if(!feats.length) return;
+    const allOn=feats.every(f=>selected.has(f.id));
+    const div=document.createElement('div');
+    div.className='feat-cat';
+    div.innerHTML=`
+      <div class="feat-cat-hd">
+        ${cat}
+        <span class="cat-toggle" onclick="toggleCat('${cat}')">${allOn?'Deselect all':'Select all'}</span>
+      </div>
+      ${feats.map(f=>`
+        <div class="feat-row" onclick="toggleFeat('${f.id}')">
+          <input class="feat-cb" type="checkbox" data-id="${f.id}" ${selected.has(f.id)?'checked':''} onclick="event.stopPropagation();toggleFeat('${f.id}')">
+          <div class="feat-info">
+            <div class="feat-name">${f.name}</div>
+            <div class="feat-desc">${f.desc}</div>
+            <span class="feat-badge fb-${f.pri}">${f.pri}</span>
+          </div>
+        </div>
+      `).join('')}
+    `;
+    grid.appendChild(div);
+  });
+  updateS1Counter();
+}
+
+// ════════════════════════════════════════════════════════════════
+// STEP 2 — SCALE
+// ════════════════════════════════════════════════════════════════
+function syncScale(){
+  coaches=parseInt($('sl-coaches').value);
+  clients=parseInt($('sl-clients').value);
+  coachees=parseInt($('sl-coachees').value);
+  $('v-coaches').textContent=coaches;
+  $('v-clients').textContent=clients;
+  $('v-coachees').textContent=coachees.toLocaleString();
+}
+
+// ════════════════════════════════════════════════════════════════
+// STEP 3 — PLATFORM CARDS
+// ════════════════════════════════════════════════════════════════
+function updateSumStrip(){
+  const musts=[...selected].filter(id=>FEATS.find(f=>f.id===id)?.pri==='must').length;
+  $('ss-feats').textContent=selected.size;
+  $('ss-musts').textContent=musts;
+  $('ss-coaches').textContent=coaches;
+  $('ss-clients').textContent=clients;
+  $('ss-coachees').textContent=coachees.toLocaleString();
+}
+
+function renderCards(){
+  const sort=$('sortBy').value;
+  const scored=PLATFORMS.map(p=>{
+    const cov=covScore(p.id);
+    const pr=p.price(coaches,clients);
+    return {...p,cov,pr};
+  });
+
+  if(sort==='coverage') scored.sort((a,b)=>b.cov.pct-a.cov.pct);
+  else if(sort==='price_asc') scored.sort((a,b)=>a.pr.y1-b.pr.y1);
+  else scored.sort((a,b)=>b.pr.y1-a.pr.y1);
+
+  const grid=$('platGrid');
+  grid.innerHTML='';
+
+  $('s3hint').textContent=`${selected.size} feature${selected.size!==1?'s':''} selected · ${coaches} coaches · ${clients} clients`;
+
+  scored.forEach((p,i)=>{
+    const bc=barClass(p.cov.pct);
+    const isSel=selPlat===p.id;
+
+    // Coverage dots for selected features (first 14)
+    const dots=[...selected].slice(0,14).map(fid=>{
+      const v=p.cov[fid]||'no';
+      const cls=v==='yes'?'dy':v==='partial'?'dp':'dn';
+      const feat=FEATS.find(f=>f.id===fid);
+      return `<div class="dot ${cls}" title="${feat?.name}: ${v}"></div>`;
+    }).join('');
+
+    const card=document.createElement('div');
+    card.className='plat-card'+(isSel?' sel':'');
+    card.innerHTML=`
+      <div class="plat-card-body">
+        <div class="plat-rank">#${i+1}</div>
+        <div class="plat-badge pb-${p.badge}">${p.badgeLbl}</div>
+        <div class="plat-name">${p.name}</div>
+        <div class="plat-tag">${p.tag}</div>
+
+        <div class="cov-bar-wrap">
+          <div class="cov-bar-lbl">
+            <span>Feature coverage</span>
+            <span class="cov-bar-score">${p.cov.score.toFixed(1)} / ${p.cov.total} &nbsp;(${p.cov.pct}%)</span>
+          </div>
+          <div class="bar-track"><div class="bar-fill ${bc}" style="width:${p.cov.pct}%"></div></div>
+        </div>
+
+        <div class="price-chips">
+          <div class="pc"><div class="pc-lbl">Monthly</div><div class="pc-val">${fmt(p.pr.m)}</div></div>
+          <div class="pc"><div class="pc-lbl">Year 1 total</div><div class="pc-val">${fmt(p.pr.y1)}</div></div>
+          <div class="pc"><div class="pc-lbl">Year 2+ / yr</div><div class="pc-val">${fmt(p.pr.a)}</div></div>
+        </div>
+      </div>
+      <div class="card-foot">
+        <div class="dots">${dots}</div>
+        <button class="view-btn" onclick="pickPlat('${p.id}')">Full detail →</button>
+      </div>
+    `;
+    card.addEventListener('click',e=>{if(e.target.tagName!=='BUTTON') pickPlat(p.id);});
+    grid.appendChild(card);
+  });
+}
+
+function pickPlat(id){
+  selPlat=id;
+  $('detailBtn').disabled=false;
+  goStep(4);
+}
+
+// ════════════════════════════════════════════════════════════════
+// STEP 4 — DETAIL
+// ════════════════════════════════════════════════════════════════
+function renderDetail(platId){
+  const p=PLATFORMS.find(x=>x.id===platId);
+  const pr=p.price(coaches,clients);
+  const cov=covScore(platId);
+  const bc=barClass(cov.pct);
+
+  // ── Feature matrix ──
+  const cats=[...new Set(FEATS.map(f=>f.cat))];
+  let mhtml=`<table class="ftable"><thead><tr><th>Feature</th><th style="width:80px;text-align:center">Coverage</th></tr></thead><tbody>`;
+  cats.forEach(cat=>{
+    const feats=FEATS.filter(f=>f.cat===cat&&selected.has(f.id));
+    if(!feats.length) return;
+    mhtml+=`<tr class="cat-r"><td colspan="2">${cat}</td></tr>`;
+    feats.forEach(f=>{
+      const v=p.cov[f.id]||'no';
+      const cls=v==='yes'?'cv-yes':v==='partial'?'cv-partial':'cv-no';
+      const lbl=v==='yes'?'✓ Yes':v==='partial'?'~ Partial':'✗ No';
+      const note=p.notes[f.id]?` <span class="tag tag-warn">⚠ Confirm</span>`:'';
+      mhtml+=`<tr><td style="font-size:11px">${f.name}${note}</td><td style="text-align:center"><span class="${cls}">${lbl}</span></td></tr>`;
+    });
+  });
+  mhtml+=`</tbody></table>`;
+
+  // ── Price table ──
+  let phtml=`<table class="ptable">
+    <tr class="sec-r"><td colspan="3">Recurring costs</td></tr>
+    <tr style="background:var(--gray-lt)"><td style="font-size:10px;font-weight:600;color:var(--gray-md)">Component</td><td class="pr" style="font-size:10px;font-weight:600;color:var(--gray-md)">Monthly</td><td class="pr" style="font-size:10px;font-weight:600;color:var(--gray-md)">Annual (−15%)</td></tr>`;
+  pr.rows.forEach(r=>{
+    phtml+=`<tr><td style="font-size:11px">${r.lbl}</td><td class="pr" style="font-size:11px">${fmt(r.m)}</td><td class="pr" style="font-size:11px">${fmt(r.a)}</td></tr>`;
+  });
+  phtml+=`<tr class="tot-r"><td>Recurring total</td><td class="pr">${fmt(pr.m)}/mo</td><td class="pr">${fmt(pr.a)}/yr</td></tr>`;
+  phtml+=`<tr class="sec-r"><td colspan="3">One-time setup (Year 1 only)</td></tr>`;
+  pr.srows.forEach(r=>{
+    phtml+=`<tr><td style="font-size:11px">${r.lbl}</td><td class="pr" style="color:var(--gray-md);font-size:11px">—</td><td class="pr" style="font-size:11px">${fmt(r.a)}</td></tr>`;
+  });
+  phtml+=`<tr class="tot-r"><td><b>Year 1 total</b></td><td class="pr">—</td><td class="pr">${fmt(pr.y1)}</td></tr>`;
+  phtml+=`<tr class="yr2-r"><td>Year 2+ annual</td><td class="pr">${fmt(pr.m)}/mo</td><td class="pr">${fmt(pr.a)}/yr</td></tr>`;
+  phtml+=`</table>`;
+
+  // ── Confirm warnings ──
+  const warns=Object.entries(p.notes).filter(([fid])=>selected.has(fid));
+  const warnHTML=warns.length?`
+    <div style="margin-top:12px;padding:10px 12px;background:var(--amber-light);border-radius:6px;border-left:3px solid var(--amber)">
+      <div style="font-size:11px;font-weight:700;color:var(--amber);margin-bottom:6px">⚠ Items to confirm with vendor</div>
+      ${warns.map(([,note])=>`<div style="font-size:11px;color:var(--gray-dk);margin-bottom:4px">• ${note}</div>`).join('')}
+    </div>`:'';
+
+  // ── Pros/cons ──
+  const prosHTML=p.pros.map(x=>`<div class="pc-li">${x}</div>`).join('');
+  const consHTML=p.cons.map(x=>`<div class="pc-li">${x}</div>`).join('');
+
+  $('detailWrap').innerHTML=`
+    <div class="detail-head">
+      <div>
+        <div class="dh-name">${p.name}</div>
+        <div class="dh-sub">${p.tag}</div>
+      </div>
+      <div class="dh-stat">
+        <div class="dh-big">${cov.pct}%</div>
+        <div class="dh-tiny">Coverage</div>
+      </div>
+      <div class="dh-stat">
+        <div class="dh-big">${fmt(pr.y1)}</div>
+        <div class="dh-tiny">Year 1 est.</div>
+      </div>
+      <div class="dh-stat">
+        <div class="dh-big">${fmt(pr.a)}</div>
+        <div class="dh-tiny">Year 2+ / yr</div>
+      </div>
+      <button class="dh-close" onclick="goStep(3)" title="Back to comparison">✕</button>
+    </div>
+
+    <div class="detail-strip">
+      <div class="bar-full">
+        <div class="bar-track" style="height:8px">
+          <div class="bar-fill ${bc}" style="width:${cov.pct}%"></div>
+        </div>
+        <span style="font-size:12px;font-weight:700;color:var(--navy);white-space:nowrap">${cov.score.toFixed(1)} / ${cov.total} features covered</span>
+      </div>
+      <div class="pros-cons">
+        <div class="pc-box pros">
+          <div class="pc-head">Strengths</div>
+          ${prosHTML}
+        </div>
+        <div class="pc-box cons">
+          <div class="pc-head">Weaknesses</div>
+          ${consHTML}
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-body">
+      <div class="detail-col">
+        <div class="dc-title">Feature coverage — your ${selected.size} selected features</div>
+        ${selected.size===0?'<div class="empty">No features selected — go back to Step 1.</div>':mhtml}
+      </div>
+      <div class="detail-col">
+        <div class="dc-title">Price estimate — ${coaches} coaches · ${clients} clients</div>
+        ${phtml}
+        ${warnHTML}
+        <div class="disc"><b>Disclaimer:</b> Estimates based on published base rates + industry benchmarks. Enterprise pricing is custom — actual quotes may vary 20–40%. Always request a formal quote from ${p.name}.</div>
+      </div>
+    </div>
+  `;
+}
+
+// ════════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════════
+renderFeats();
+</script>
+</body>
+</html>
