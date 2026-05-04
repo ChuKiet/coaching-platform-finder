@@ -273,16 +273,16 @@ input[type=range]{width:100%;accent-color:var(--teal);height:4px;cursor:pointer}
       </div>
       <div class="scale-item">
         <label>Corporate client companies</label>
-        <div class="scale-val" id="v-clients">20</div>
+        <div class="scale-val" id="v-clients">1</div>
         <div class="scale-sub">Each gets their own SSO config &amp; portal</div>
-        <input type="range" min="1" max="60" step="1" value="20" id="sl-clients" oninput="syncScale()">
+        <input type="range" min="1" max="60" step="1" value="1" id="sl-clients" oninput="syncScale()">
         <div class="scale-ends"><span>1</span><span>60</span></div>
       </div>
       <div class="scale-item">
         <label>Active coachees / month</label>
-        <div class="scale-val" id="v-coachees">300</div>
+        <div class="scale-val" id="v-coachees">50</div>
         <div class="scale-sub">Employees actively booking sessions</div>
-        <input type="range" min="20" max="2000" step="20" value="300" id="sl-coachees" oninput="syncScale()">
+        <input type="range" min="10" max="2000" step="10" value="50" id="sl-coachees" oninput="syncScale()">
         <div class="scale-ends"><span>20</span><span>2,000</span></div>
       </div>
     </div>
@@ -545,7 +545,7 @@ const PLATFORMS = [
 // ════════════════════════════════════════════════════════════════
 // Default: all must-have features selected (matching the PDF evaluation)
 const selected = new Set(FEATS.filter(f=>f.pri==='must').map(f=>f.id));
-let coaches=50, clients=20, coachees=300;
+let coaches=50, clients=1, coachees=50;
 let filt='all';
 let selPlat=null;
 let curStep=1;
